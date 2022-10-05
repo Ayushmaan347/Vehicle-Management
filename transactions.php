@@ -13,7 +13,7 @@
 </style>
 <div class="card card-outline rounded-0 card-navy">
 	<div class="card-header">
-		<h3 class="card-title">List of Vehicles</h3>
+		<h3 class="card-title">List of Transactions</h3>
 	</div>
 	<div class="card-body">
         <div class="container-fluid">
@@ -29,8 +29,8 @@
 				<thead>
 					<tr>
 						<th>#</th>
-						<th>Brand</th>
-						<th>Model</th>
+						<th>DateTime</th>
+						<th>Customer</th>
 						<th>Vehicle</th>
 						<th>Price</th>
 						<th>Action</th>
@@ -39,33 +39,27 @@
 				<tbody>
 					<?php 
 					$i = 1;
-						$qry = $conn->query("SELECT v.*, m.model, m.engine_type, m.transmission_type, b.name as `brand`, ct.name as `car_type` from `vehicle_list` v inner join model_list m on v.model_id = m.id inner join brand_list b on m.brand_id = b.id inner join car_type_list ct on m.car_type_id = ct.id where v.status = 0 and v.delete_flag = 0 order by abs(unix_timestamp(v.date_created)) asc ");
+						$qry = $conn->query("SELECT t.*, concat(t.firstname,' ',COALESCE(concat(t.middlename,' '), ''), t.lastname) as customer, v.mv_number, v.plate_number, v.price, m.model, m.engine_type, m.transmission_type, b.name as `brand`, ct.name as `car_type` from transaction_list t inner join `vehicle_list` v on t.vehicle_id = v.id inner join model_list m on v.model_id = m.id inner join brand_list b on m.brand_id = b.id inner join car_type_list ct on m.car_type_id = ct.id where v.status = 1 and v.delete_flag = 0 order by abs(unix_timestamp(v.date_created)) asc ");
 						while($row = $qry->fetch_assoc()):
 					?>
 						<tr>
 							<td class="text-center"><?php echo $i++; ?></td>
+                            <td><?= date("Y-m-d H:i", strtotime($row['date_created'])) ?></td>
 							<td class="">
 								<div style="line-height:1em">
-									<div><b><?= $row['brand'] ?></b></div>
-									<div><small class="text-muted"><?= $row['car_type'] ?></small></div>
+									<div><b><?= $row['customer'] ?></b></div>
+									<div><small class="text-muted"><?= $row['email'] ?></small></div>
 								</div>
 							</td>
 							<td class="">
 								<div style="line-height:1em">
-									<div><b><?= $row['model'] ?></b></div>
-									<div><small class="text-muted"><?= $row['engine_type'] ?></small></div>
-									<div><small class="text-muted"><?= $row['transmission_type'] ?></small></div>
-								</div>
-							</td>
-							<td class="">
-								<div style="line-height:1em">
-									<div><b>MV File No.: <?= $row['mv_number'] ?></b></div>
-									<div><small class="text-muted">Plate #: <?= $row['plate_number'] ?></small></div>
+									<div><b><?= $row['brand'] ?> - <?= $row['model'] ?></b></div>
+									<div><small class="text-muted">Plate #: <?= $row['mv_number'] ?></small></div>
 								</div>
 							</td>
 							<td class="text-right"><?= number_format($row['price'], 2) ?></td>
 							<td align="center" class='text-center'>
-								<a class="btn btn-flat btn-light bg-gradient-light btn-sm border sell_vehicle" href="./?page=vehicles/sell_vehicle&id=<?= $row['id'] ?>"><i class="far fa-handshake"></i> Sell</a>
+								<a class="btn btn-flat btn-light bg-gradient-light btn-sm border" href="./?page=vehicles/view_transaction&id=<?= $row['id'] ?>"><i class="fa fa-eye"></i> View</a>
 							</td>
 						</tr>
 					<?php endwhile; ?>
@@ -83,6 +77,7 @@
 			order:[0,'asc']
 		});
 		$('.dataTable td,.dataTable th').addClass('py-1 px-2 align-middle')
+		
 	})
 	function delete_vehicle($id){
 		start_loader();
